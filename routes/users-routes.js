@@ -1,66 +1,22 @@
 const express = require("express");
-const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
+const usersControllers = require("../controllers/users-controllers");
+const checkAuth = require("../middleware/check-auth");
+const router = express.Router();
 
-const adminRoutes = require("./routes/admin-routes");
-const userRoutes = require("./routes/user-routes");
-const HttpError = require("./models/http-error");
+router.post("/signup", usersControllers.signUp);
 
-const app = express();
-mongoose.set("strictQuery", false);
+router.post("/login", usersControllers.login);
 
-app.use(bodyParser.json());
+router.get("/", usersControllers.getUsers);
 
-// app.use((req, res, next) => {
-//   res.setHeader("Access-Control-Allow-Origin", "*");
-//   res.setHeader(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-//   );
-//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+router.get("/:eid", usersControllers.getUserById);
 
-//   next();
-// });
+router.get("/viewTask", usersControllers.viewTask);
 
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PATCH, DELETE, OPTIONS, PUT"
-  );
+router.get("/:tid", usersControllers.viewTaskById);
 
-  next();
-});
+router.post("/applyForLeave", usersControllers.applyForLeave);
 
-app.use("/api/admin", adminRoutes);
-app.use("/api/users", userRoutes);
+router.use(checkAuth);
 
-app.use((req, res, next) => {
-  const error = new HttpError("Could not find this route.", 404);
-  throw error;
-});
-
-app.use((error, req, res, next) => {
-  if (res.headerSent) {
-    return next(error);
-  }
-  res.status(error.code || 500);
-  res.json({ message: error.message || "An unknown error occurred!" });
-});
-
-mongoose
-  .connect(
-    "mongodb+srv://BIJAY:C4EvNJEJvcHeQXvT@cluster0.dka1gve.mongodb.net/users?retryWrites=true&w=majority"
-  )
-  .then(() => {
-    app.listen(5001);
-    console.log("Connected");
-  })
-  .catch((err) => {
-    console.log(err);
-    console.log("Not Connected!");
-  });
+module.exports = router;
