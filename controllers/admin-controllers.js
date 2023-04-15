@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const Admin = require("../models/admin-model");
-// const Task = require("../models/tasks-model");
+const Task = require("../models/tasks-model");
 const User = require("../models/user-model");
 const Leave = require("../models/leave-model");
 const HttpError = require("../models/http-error");
@@ -155,11 +155,7 @@ exports.deleteTask = async (req, res, next) => {
   }
 
   try {
-    task = await Task.deleteOne(taskId).then((result) => {
-      res.status(200).json({
-        message: "Delete Successfully!",
-      });
-    });
+    await Task.deleteOne({ _id: taskId });
   } catch (err) {
     const error = new HttpError(
       "Something went wrongs, could not delete task",
@@ -167,17 +163,44 @@ exports.deleteTask = async (req, res, next) => {
     );
     return next(error);
   }
+
   res.status(200).json({ message: "Task deleted." });
 };
 
-// exports.deleteTask = (req, res, next) => {
-//   Task.deleteOne({ _id: req.params.id }).then((result) => {
-//     console.log({ result });
-//     res.status(200).json({
-//       message: "Products Delete Successfully!",
-//     });
-//   });
-// };
+exports.deleteEmployee = async (req, res, next) => {
+  const empId = req.params.eid;
+
+  let employee;
+  try {
+    employee = await User.findById(empId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not delete employee",
+      500
+    );
+    return next(error);
+  }
+
+  if (!employee) {
+    const error = new HttpError(
+      "Could not find employee details for this id",
+      404
+    );
+    return next(error);
+  }
+
+  try {
+    employee = await User.deleteOne({ _id: empId });
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrongs, could not delete employee",
+      500
+    );
+
+    return next(error);
+  }
+  res.status(200).json({ message: "Employee deleted." });
+};
 
 exports.viewAllEmployes = async (req, res, next) => {
   let users;
@@ -200,12 +223,12 @@ exports.viewAllEmployes = async (req, res, next) => {
 };
 
 exports.viewEmployeById = async (req, res, next) => {
-  const employeeId = req.params.eid;
+  const employeesId = req.params.eid;
 
   let employee;
 
   try {
-    employee = await User.findById(employeeId);
+    employee = await User.findById(employeesId);
   } catch (err) {
     const error = new HttpError(
       "Something went wrong, could not find employee by this id",
@@ -221,24 +244,114 @@ exports.viewEmployeById = async (req, res, next) => {
 };
 
 exports.createEmployee = async (req, res, next) => {
-  const { name, email, password } = req.body;
-
-  const createdEmployes = new User({
-    name,
-    email,
-    password,
-  });
+  const { name, email, password, role } = req.body;
+  let existingUser;
   try {
-    await createdEmployes.save();
+    existingUser = await User.findOne({ email: email });
   } catch (err) {
+    const error = new HttpError("Signing in failed", 500);
+    return next(error);
+  }
+
+  if (existingUser) {
     const error = new HttpError(
-      "Creating employee failed, please try again.",
-      500
+      "User exists already, please login instead",
+      422
     );
     return next(error);
   }
-  res.status(201).json({ employes: createdEmployes });
+
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError("Could not create user, please try again", 500);
+    return next(error);
+  }
+
+  const createdUser = new User({
+    name,
+    email,
+    password: hashedPassword,
+    role,
+    image:
+      "https://img.freepik.com/premium-vector/freelance-sticker-logo-icon-vector-man-with-desktop-blogger-with-laptop-icon-vector-isolated-background-eps-10_399089-1098.jpg",
+  });
+
+  try {
+    await createdUser.save();
+  } catch (err) {
+    const error = new HttpError("Signing in failed, please try again.", 500);
+    return next(error);
+  }
+
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      "supersecret",
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    const error = new HttpError("Signing in failed, please try again.", 500);
+    return next(error);
+  }
+
+  res.status(201).json({
+    userId: createdUser.id,
+    email: createdUser.email,
+    token: token,
+    role: createdUser.role,
+    expiresIn: 3600,
+  });
 };
+
+// exports.createEmployee = async (req, res, next) => {
+//   const { name, email, password, role } = req.body;
+
+//   const createdEmployee = new User({
+//     name,
+//     email,
+//     password,
+//     role,
+//     image:
+//       "https://img.freepik.com/premium-vector/freelance-sticker-logo-icon-vector-man-with-desktop-blogger-with-laptop-icon-vector-isolated-background-eps-10_399089-1098.jpg",
+//   });
+
+//   await createdEmployee.save().then((employee) => {
+//     const obj = {
+//       id: employee._id,
+//       name: employee.name,
+//       email: employee.email,
+//       password: employee.password,
+//       role: employee.role,
+//     };
+//     res.json({
+//       message: "Employee Created",
+//       createdEmployees: obj,
+//     });
+//   });
+// };
+//   try {
+//     await createdEmployee.save();
+//   } catch (err) {
+//     const error = new HttpError(
+//       "Creating employee failed, please try again.",
+//       500
+//     );
+//     return next(error);
+//   }
+
+//   res.status(201).json({
+//     message: "Employee created successfully!",
+//     employee: {
+//       id: createdEmployee._id,
+//       name: createdEmployee.name,
+//       email: createdEmployee.email,
+//       role: createdEmployee.role,
+//     },
+//   });
+// };
 
 exports.viewAllLeave = async (req, res, next) => {
   let users;
