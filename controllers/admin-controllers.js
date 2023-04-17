@@ -90,32 +90,48 @@ exports.getAdminUser = async (req, res, next) => {
     ),
   });
 };
-
 exports.createTask = async (req, res, next) => {
-  const { employeeId, title, description, taskgivendate, status } = req.body;
-  const task = new Task({
-    employeeId,
-    title,
-    description,
-    taskgivendate,
-    status,
-  });
+  try {
+    const {
+      employeeId,
+      title,
+      description,
+      taskgivendate,
+      status,
+      dueDate,
+      priority,
+    } = req.body;
 
-  await task.save().then((task) => {
+    const task = new Task({
+      employeeId,
+      title,
+      description,
+      taskgivendate,
+      status,
+      dueDate,
+      priority,
+    });
+
+    const createdTask = await task.save();
     const obj = {
-      id: task._id,
-      employeeId: task.employeeId,
-      title: task.title,
-      description: task.description,
-      taskgivendate: task.taskgivendate,
-      status: task.status,
+      id: createdTask._id,
+      employeeId: createdTask.employeeId,
+      title: createdTask.title,
+      description: createdTask.description,
+      taskgivendate: createdTask.taskgivendate,
+      status: createdTask.status,
+      dueDate: createdTask.dueDate,
+      priority: createdTask.priority,
     };
 
     res.json({
       message: "Task Created",
-      createdTasks: obj,
+      createdTask: obj,
     });
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Creating task failed" });
+  }
 };
 
 exports.taskGiven = async (req, res, next) => {
@@ -244,7 +260,8 @@ exports.viewEmployeById = async (req, res, next) => {
 };
 
 exports.createEmployee = async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const { name, address, phone, dateofbirth, email, hireDate, password, role } =
+    req.body;
   let existingUser;
   try {
     existingUser = await User.findOne({ email: email });
@@ -272,6 +289,10 @@ exports.createEmployee = async (req, res, next) => {
   const createdUser = new User({
     name,
     email,
+    address,
+    phone,
+    dateofbirth,
+    hireDate,
     password: hashedPassword,
     role,
     image:
@@ -281,7 +302,8 @@ exports.createEmployee = async (req, res, next) => {
   try {
     await createdUser.save();
   } catch (err) {
-    const error = new HttpError("Signing in failed, please try again.", 500);
+    const error = new HttpError("Creating user failed, please try again.", 500);
+    console.log({ err });
     return next(error);
   }
 

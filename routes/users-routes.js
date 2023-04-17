@@ -17,6 +17,7 @@ router.get("/:tid", usersControllers.viewTaskById);
 
 router.post("/applyForLeave", usersControllers.applyForLeave);
 
-router.use(checkAuth);
+router.get("/taa/:ttid", usersControllers.viewTaskByEmployeeId);
 
+router.use(checkAuth);
 module.exports = router;

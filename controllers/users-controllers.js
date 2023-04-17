@@ -7,7 +7,7 @@ const Leave = require("../models/leave-model");
 const HttpError = require("../models/http-error");
 
 exports.signUp = async (req, res, next) => {
-  const { name, email, password, address, phone, dob, role } = req.body;
+  const { name, email, password, address, phone, dateofbirth, role } = req.body;
   let existingUser;
   try {
     existingUser = await User.findOne({ email: email });
@@ -37,7 +37,7 @@ exports.signUp = async (req, res, next) => {
     email,
     address,
     phone,
-    dob,
+    dateofbirth,
 
     password: hashedPassword,
     role,
@@ -217,14 +217,25 @@ exports.viewTaskById = async (req, res, next) => {
 };
 
 exports.applyForLeave = async (req, res, next) => {
-  const { employeeId, startDate, endDate, appliedDate, reason, status } =
-    req.body;
   try {
-    const appliedLeave = new Leave({
+    const {
       employeeId,
+      title,
       startDate,
       endDate,
       appliedDate,
+      duration,
+      reason,
+      status,
+    } = req.body;
+
+    const appliedLeave = new Leave({
+      employeeId,
+      title,
+      startDate,
+      endDate,
+      appliedDate,
+      duration,
       reason,
       status,
     });
@@ -233,8 +244,11 @@ exports.applyForLeave = async (req, res, next) => {
     const obj = {
       id: leave._id,
       employeeId: leave.employeeId,
+      title: leave.title,
       startDate: leave.startDate,
       endDate: leave.endDate,
+      appliedDate: leave.appliedDate,
+      duration: leave.duration,
       reason: leave.reason,
       status: leave.status,
     };
@@ -244,6 +258,25 @@ exports.applyForLeave = async (req, res, next) => {
       appliedLeave: obj,
     });
   } catch (err) {
-    next(err);
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
+};
+
+exports.viewTaskByEmployeeId = async (req, res, next) => {
+  const userId = req.params.ttid;
+
+  let task;
+  try {
+    task = await Task.find({ employeeId: userId });
+  } catch (err) {
+    const error = new HttpError("Fetching failed", 500);
+    return next(error);
+  }
+
+  if (!task || task.length === 0) {
+    const error = new HttpError("No task found for this employee id!", 500);
+    return next(error);
+  }
+  res.json({ task: task.map((task) => task.toObject({ getters: true })) });
 };
