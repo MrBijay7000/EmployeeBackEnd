@@ -175,6 +175,7 @@ exports.getUserById = async (req, res, next) => {
     );
     return next(error);
   }
+
   res.json({ user: user.toObject({ getters: true }) });
 };
 
@@ -226,7 +227,6 @@ exports.applyForLeave = async (req, res, next) => {
       appliedDate,
       duration,
       reason,
-      status,
     } = req.body;
 
     const appliedLeave = new Leave({
@@ -237,7 +237,6 @@ exports.applyForLeave = async (req, res, next) => {
       appliedDate,
       duration,
       reason,
-      status,
     });
 
     const leave = await appliedLeave.save();
@@ -250,7 +249,6 @@ exports.applyForLeave = async (req, res, next) => {
       appliedDate: leave.appliedDate,
       duration: leave.duration,
       reason: leave.reason,
-      status: leave.status,
     };
 
     res.json({
@@ -259,12 +257,14 @@ exports.applyForLeave = async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal Server Error" });
+    res
+      .status(500)
+      .json({ message: "Applying For Leave Failed, please try again!" });
   }
 };
 
 exports.viewTaskByEmployeeId = async (req, res, next) => {
-  const userId = req.params.ttid;
+  const userId = req.params.empId;
 
   let task;
   try {
@@ -279,4 +279,50 @@ exports.viewTaskByEmployeeId = async (req, res, next) => {
     return next(error);
   }
   res.json({ task: task.map((task) => task.toObject({ getters: true })) });
+};
+
+exports.updateUser = async (req, res, next) => {
+  const { name, address, phone, dateofbirth, email } = req.body;
+
+  const userId = req.params.empId;
+
+  let user;
+  try {
+    user = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError("Changing details of users failed", 500);
+    return next(error);
+  }
+
+  if (user) {
+    const error = new HttpError("User exists already", 422);
+    return next(error);
+  }
+
+  try {
+    user = await User.findById(userId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong,could not update user.",
+      500
+    );
+    return next(error);
+  }
+  user.name = name;
+  user.address = address;
+  user.phone = phone;
+  user.dateofbirth = dateofbirth;
+  user.email = email;
+
+  try {
+    await user.save();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong,could not update user.",
+      500
+    );
+    return next(error);
+  }
+
+  res.status(200).json({ user: user.toObject({ getters: true }) });
 };

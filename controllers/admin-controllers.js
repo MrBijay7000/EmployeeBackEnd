@@ -328,53 +328,6 @@ exports.createEmployee = async (req, res, next) => {
   });
 };
 
-// exports.createEmployee = async (req, res, next) => {
-//   const { name, email, password, role } = req.body;
-
-//   const createdEmployee = new User({
-//     name,
-//     email,
-//     password,
-//     role,
-//     image:
-//       "https://img.freepik.com/premium-vector/freelance-sticker-logo-icon-vector-man-with-desktop-blogger-with-laptop-icon-vector-isolated-background-eps-10_399089-1098.jpg",
-//   });
-
-//   await createdEmployee.save().then((employee) => {
-//     const obj = {
-//       id: employee._id,
-//       name: employee.name,
-//       email: employee.email,
-//       password: employee.password,
-//       role: employee.role,
-//     };
-//     res.json({
-//       message: "Employee Created",
-//       createdEmployees: obj,
-//     });
-//   });
-// };
-//   try {
-//     await createdEmployee.save();
-//   } catch (err) {
-//     const error = new HttpError(
-//       "Creating employee failed, please try again.",
-//       500
-//     );
-//     return next(error);
-//   }
-
-//   res.status(201).json({
-//     message: "Employee created successfully!",
-//     employee: {
-//       id: createdEmployee._id,
-//       name: createdEmployee.name,
-//       email: createdEmployee.email,
-//       role: createdEmployee.role,
-//     },
-//   });
-// };
-
 exports.viewAllLeave = async (req, res, next) => {
   let users;
   try {

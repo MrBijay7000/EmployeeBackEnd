@@ -17,7 +17,10 @@ router.get("/:tid", usersControllers.viewTaskById);
 
 router.post("/applyForLeave", usersControllers.applyForLeave);
 
-router.get("/taa/:ttid", usersControllers.viewTaskByEmployeeId);
+router.get("/task/:empId", usersControllers.viewTaskByEmployeeId);
+
+router.patch("/update/:empId", usersControllers.updateUser);
 
 router.use(checkAuth);
+
 module.exports = router;
