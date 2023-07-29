@@ -1,10 +1,78 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const User = require("../models/user-model");
 const Task = require("../models/tasks-model");
 const Leave = require("../models/leave-model");
 const HttpError = require("../models/http-error");
+
+// exports.signUp = async (req, res, next) => {
+//   const { name, email, password, address, phone, dateofbirth, role } = req.body;
+//   let existingUser;
+//   try {
+//     existingUser = await User.findOne({ email: email });
+//   } catch (err) {
+//     const error = new HttpError("Signing in failed", 500);
+//     return next(error);
+//   }
+
+//   if (existingUser) {
+//     const error = new HttpError(
+//       "User exists already, please login instead",
+//       422
+//     );
+//     return next(error);
+//   }
+
+//   let hashedPassword;
+//   try {
+//     hashedPassword = await bcrypt.hash(password, 12);
+//   } catch (err) {
+//     const error = new HttpError("Could not create user, please try again", 500);
+//     return next(error);
+//   }
+
+//   const createdUser = new User({
+//     name,
+//     email,
+//     address,
+//     phone,
+//     dateofbirth,
+//     password: hashedPassword,
+//     role,
+//     image:
+//       "https://img.freepik.com/premium-vector/freelance-sticker-logo-icon-vector-man-with-desktop-blogger-with-laptop-icon-vector-isolated-background-eps-10_399089-1098.jpg",
+//   });
+
+//   try {
+//     await createdUser.save();
+//   } catch (err) {
+//     const error = new HttpError("Signing in failed, please try again.", 500);
+//     console.log({ err });
+//     return next(error);
+//   }
+
+//   let token;
+//   try {
+//     token = jwt.sign(
+//       { userId: createdUser.id, email: createdUser.email },
+//       "supersecret",
+//       { expiresIn: "1h" }
+//     );
+//   } catch (err) {
+//     const error = new HttpError("Signing in failed, please try again.", 500);
+//     return next(error);
+//   }
+
+//   res.status(201).json({
+//     userId: createdUser.id,
+//     email: createdUser.email,
+//     token: token,
+//     role: createdUser.role,
+//     expiresIn: 3600,
+//   });
+// };
 
 exports.signUp = async (req, res, next) => {
   const { name, email, password, address, phone, dateofbirth, role } = req.body;
@@ -38,7 +106,6 @@ exports.signUp = async (req, res, next) => {
     address,
     phone,
     dateofbirth,
-
     password: hashedPassword,
     role,
     image:
@@ -48,7 +115,7 @@ exports.signUp = async (req, res, next) => {
   try {
     await createdUser.save();
   } catch (err) {
-    const error = new HttpError("Signing in failed, pleease try again.", 500);
+    const error = new HttpError("Signing in failed, please try again.", 500);
     console.log({ err });
     return next(error);
   }

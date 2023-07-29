@@ -90,6 +90,7 @@ exports.getAdminUser = async (req, res, next) => {
     ),
   });
 };
+
 exports.createTask = async (req, res, next) => {
   try {
     const {
@@ -346,4 +347,126 @@ exports.viewAllLeave = async (req, res, next) => {
       })
     ),
   });
+};
+
+// exports.updateUser = async (req, res, next) => {
+//   const { name, address, phone, dateofbirth, email } = req.body;
+
+//   const userId = req.params.empId;
+
+//   let user;
+//   try {
+//     user = await User.findOne({ email: email });
+//   } catch (err) {
+//     const error = new HttpError("Changing details of users failed", 500);
+//     return next(error);
+//   }
+
+//   if (user) {
+//     const error = new HttpError("User exists already", 422);
+//     console.log({ error });
+//     return next(error);
+//   }
+
+//   try {
+//     user = await User.findById(userId);
+//   } catch (err) {
+//     const error = new HttpError(
+//       "Something went wrong,could not update user.",
+//       500
+//     );
+//     return next(error);
+//   }
+//   user.name = name;
+//   user.address = address;
+//   user.phone = phone;
+//   user.dateofbirth = dateofbirth;
+//   user.email = email;
+
+//   try {
+//     await user.save();
+//   } catch (err) {
+//     const error = new HttpError(
+//       "Something went wrong,could not update user.",
+//       500
+//     );
+//     return next(error);
+//   }
+
+//   res.status(200).json({ user: user.toObject({ getters: true }) });
+// };
+exports.updateUser = async (req, res, next) => {
+  const { name, address, phone, dateofbirth, email } = req.body;
+  const userId = req.params.employeeId;
+
+  let user;
+  try {
+    user = await User.findById(userId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find the user.",
+      500
+    );
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError("User not found.", 404);
+    return next(error);
+  }
+
+  user.name = name;
+  user.address = address;
+  user.phone = phone;
+  user.dateofbirth = dateofbirth;
+  user.email = email;
+
+  try {
+    await user.save();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not update user.",
+      500
+    );
+    return next(error);
+  }
+
+  res.status(200).json({ user: user.toObject({ getters: true }) });
+};
+
+exports.changePassword = async (req, res, next) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user.id; // Assuming you have stored the user ID in the request object after authentication
+
+  try {
+    const user = await User.findById(userId);
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid old password" });
+    }
+
+    // Hash the new password
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(newPassword, password, 12);
+    } catch (err) {
+      const error = new HttpError(
+        "Could not create user, please try again",
+        500
+      );
+      return next(error);
+    }
+    // const salt = await bcrypt.genSalt(10);
+    // const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the user's password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
+  }
 };

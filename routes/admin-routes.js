@@ -25,6 +25,10 @@ router.post("/addEmployes", adminControllers.createEmployee);
 
 router.get("/viewAllLeave", adminControllers.viewAllLeave);
 
-router.use(checkAuth);
+router.patch("/updateUsers/:employeeId", adminControllers.updateUser);
+
+router.post("/changePassword/:id", adminControllers.changePassword);
+
+// router.use(checkAuth);
 
 module.exports = router;
