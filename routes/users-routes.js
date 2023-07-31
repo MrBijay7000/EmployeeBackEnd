@@ -21,6 +21,10 @@ router.get("/task/:empId", usersControllers.viewTaskByEmployeeId);
 
 router.patch("/update/:empId", usersControllers.updateUser);
 
+router.post("/createEmployee", usersControllers.createEmployee);
+
+router.get("/notice", usersControllers.getNotice);
+
 router.use(checkAuth);
 
 module.exports = router;

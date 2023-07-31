@@ -1,8 +1,9 @@
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
 const User = require("../models/user-model");
+const Notice = require("../models/notice-model");
 const Task = require("../models/tasks-model");
 const Leave = require("../models/leave-model");
 const HttpError = require("../models/http-error");
@@ -74,6 +75,74 @@ const HttpError = require("../models/http-error");
 //   });
 // };
 
+// exports.signUp = async (req, res, next) => {
+//   const { name, email, password, address, phone, dateofbirth, role } = req.body;
+//   let existingUser;
+//   try {
+//     existingUser = await User.findOne({ email: email });
+//   } catch (err) {
+//     const error = new HttpError("Signing in failed", 500);
+//     return next(error);
+//   }
+
+//   if (existingUser) {
+//     const error = new HttpError(
+//       "User exists already, please login instead",
+//       422
+//     );
+//     return next(error);
+//   }
+
+//   let hashedPassword;
+//   try {
+//     hashedPassword = await bcrypt.hash(password, 12);
+//   } catch (err) {
+//     const error = new HttpError("Could not create user, please try again", 500);
+//     return next(error);
+//   }
+
+//   const createdUser = new User({
+//     name,
+//     email,
+//     address,
+//     phone,
+//     dateofbirth,
+//     password: hashedPassword,
+//     role,
+//     image:
+//       "https://img.freepik.com/premium-vector/freelance-sticker-logo-icon-vector-man-with-desktop-blogger-with-laptop-icon-vector-isolated-background-eps-10_399089-1098.jpg",
+//   });
+
+//   try {
+//     await createdUser.save();
+//   } catch (err) {
+//     const error = new HttpError("Signingg in failed, please try again.", 500);
+
+//     console.log({ err });
+//     return next(error);
+//   }
+
+//   let token;
+//   try {
+//     token = jwt.sign(
+//       { userId: createdUser.id, email: createdUser.email },
+//       "supersecret",
+//       { expiresIn: "1h" }
+//     );
+//   } catch (err) {
+//     const error = new HttpError("Signing in failed, please try again.", 500);
+//     return next(error);
+//   }
+
+//   res.status(201).json({
+//     userId: createdUser.id,
+//     email: createdUser.email,
+//     token: token,
+//     role: createdUser.role,
+//     expiresIn: 3600,
+//   });
+// };
+
 exports.signUp = async (req, res, next) => {
   const { name, email, password, address, phone, dateofbirth, role } = req.body;
   let existingUser;
@@ -115,8 +184,11 @@ exports.signUp = async (req, res, next) => {
   try {
     await createdUser.save();
   } catch (err) {
-    const error = new HttpError("Signing in failed, please try again.", 500);
+    const error = new HttpError("Signingg in failed, please try again.", 500);
+
     console.log({ err });
+    console.log({ createdUser });
+
     return next(error);
   }
 
@@ -251,7 +323,7 @@ exports.viewTask = async (req, res, next) => {
   try {
     tasks = await Task.find({});
   } catch (err) {
-    const error = new HttpError("Could not find the job", 500);
+    const error = new HttpError("Could not find the task", 500);
     return next(error);
   }
   res.json({
@@ -287,6 +359,7 @@ exports.viewTaskById = async (req, res, next) => {
 exports.applyForLeave = async (req, res, next) => {
   try {
     const {
+      employeeName,
       employeeId,
       title,
       startDate,
@@ -297,6 +370,8 @@ exports.applyForLeave = async (req, res, next) => {
     } = req.body;
 
     const appliedLeave = new Leave({
+      employeeName,
+
       employeeId,
       title,
       startDate,
@@ -308,6 +383,8 @@ exports.applyForLeave = async (req, res, next) => {
 
     const leave = await appliedLeave.save();
     const obj = {
+      employeeName: leave.employeeName,
+
       id: leave._id,
       employeeId: leave.employeeId,
       title: leave.title,
@@ -392,4 +469,115 @@ exports.updateUser = async (req, res, next) => {
   }
 
   res.status(200).json({ user: user.toObject({ getters: true }) });
+};
+
+exports.createEmployee = async (req, res, next) => {
+  const { name, address, phone, dateofbirth, email, hireDate, password, role } =
+    req.body;
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError("Signing in failed", 500);
+    return next(error);
+  }
+
+  if (existingUser) {
+    const error = new HttpError(
+      "User exists already, please login instead",
+      422
+    );
+    return next(error);
+  }
+
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError("Could not create user, please try again", 500);
+    return next(error);
+  }
+
+  const createdUser = new User({
+    name,
+    email,
+    address,
+    phone,
+    dateofbirth,
+    hireDate,
+    password: hashedPassword,
+    role,
+    image:
+      "https://img.freepik.com/premium-vector/freelance-sticker-logo-icon-vector-man-with-desktop-blogger-with-laptop-icon-vector-isolated-background-eps-10_399089-1098.jpg",
+  });
+
+  try {
+    await createdUser.save();
+  } catch (err) {
+    const error = new HttpError("Creating user failed, please try again.", 500);
+    console.log({ err });
+    return next(error);
+  }
+
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      "supersecret",
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    const error = new HttpError("Signing in failed, please try again.", 500);
+    return next(error);
+  }
+
+  res.status(201).json({
+    userId: createdUser.id,
+    email: createdUser.email,
+    token: token,
+    role: createdUser.role,
+    expiresIn: 3600,
+  });
+};
+
+exports.getNotice = async (req, res, next) => {
+  let notices;
+
+  try {
+    notices = await Notice.find({});
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching notice failed, please try again later",
+      500
+    );
+    return next(error);
+  }
+  res.json({
+    notices: notices.map((notice) =>
+      notice.toObject({
+        getters: true,
+      })
+    ),
+  });
+};
+
+exports.getUsers = async (req, res, next) => {
+  let users;
+
+  try {
+    users = await User.find({}, "-password");
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching users failed, please try again later",
+      500
+    );
+    return next(error);
+  }
+  res.json({
+    users: users.map((user) =>
+      user.toObject({
+        getters: true,
+      })
+    ),
+  });
 };

@@ -41,9 +41,22 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occurred!" });
 });
 
+// mongoose
+//   .connect(
+//     "mongodb+srv://BIJAY:C4EvNJEJvcHeQXvT@cluster0.dka1gve.mongodb.net/users?retryWrites=true&w=majority"
+//   )
+//   .then(() => {
+//     app.listen(5001);
+//     console.log("Connected");
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//     console.log("Not Connected!");
+//   });
+
 mongoose
   .connect(
-    "mongodb+srv://BIJAY:C4EvNJEJvcHeQXvT@cluster0.dka1gve.mongodb.net/users?retryWrites=true&w=majority"
+    "mongodb+srv://shresthabzay95:shresthabzay95@cluster0.9wzjial.mongodb.net/?retryWrites=true&w=majority"
   )
   .then(() => {
     app.listen(5001);
@@ -53,3 +66,16 @@ mongoose
     console.log(err);
     console.log("Not Connected!");
   });
+
+// mongoose
+//   .connect(
+//     "mongodb+srv://shresthabzay95:shresthabzay95@cluster0.ttppitt.mongodb.net/?retryWrites=true&w=majority"
+//   )
+//   .then(() => {
+//     app.listen(5001);
+//     console.log("Connected");
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//     console.log("Not Connected!");
+//   });

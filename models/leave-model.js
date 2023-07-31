@@ -3,6 +3,8 @@ var Schema = mongoose.Schema;
 
 var LeaveSchema = new Schema({
   employeeId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  employeeName: { type: String, required: true },
+
   title: { type: String, required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
@@ -12,7 +14,7 @@ var LeaveSchema = new Schema({
   status: {
     type: String,
     enum: ["Pending", "Approved", "Rejected"],
-    default: "Pending",
+    default: "Approved",
   },
 });
 

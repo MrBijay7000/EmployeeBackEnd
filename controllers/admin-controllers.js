@@ -4,7 +4,9 @@ const jwt = require("jsonwebtoken");
 const Admin = require("../models/admin-model");
 const Task = require("../models/tasks-model");
 const User = require("../models/user-model");
+const AddUser = require("../models/new-employee");
 const Leave = require("../models/leave-model");
+const Notice = require("../models/notice-model");
 const HttpError = require("../models/http-error");
 
 exports.signUp = async (req, res, next) => {
@@ -94,8 +96,8 @@ exports.getAdminUser = async (req, res, next) => {
 exports.createTask = async (req, res, next) => {
   try {
     const {
-      employeeId,
-      title,
+      employeeName,
+      taskName,
       description,
       taskgivendate,
       status,
@@ -104,8 +106,8 @@ exports.createTask = async (req, res, next) => {
     } = req.body;
 
     const task = new Task({
-      employeeId,
-      title,
+      employeeName,
+      taskName,
       description,
       taskgivendate,
       status,
@@ -116,8 +118,8 @@ exports.createTask = async (req, res, next) => {
     const createdTask = await task.save();
     const obj = {
       id: createdTask._id,
-      employeeId: createdTask.employeeId,
-      title: createdTask.title,
+      employeeName: createdTask.employeeName,
+      taskName: createdTask.taskName,
       description: createdTask.description,
       taskgivendate: createdTask.taskgivendate,
       status: createdTask.status,
@@ -261,8 +263,7 @@ exports.viewEmployeById = async (req, res, next) => {
 };
 
 exports.createEmployee = async (req, res, next) => {
-  const { name, address, phone, dateofbirth, email, hireDate, password, role } =
-    req.body;
+  const { name, address, phone, dateofbirth, email, password, role } = req.body;
   let existingUser;
   try {
     existingUser = await User.findOne({ email: email });
@@ -293,7 +294,7 @@ exports.createEmployee = async (req, res, next) => {
     address,
     phone,
     dateofbirth,
-    hireDate,
+
     password: hashedPassword,
     role,
     image:
@@ -308,25 +309,25 @@ exports.createEmployee = async (req, res, next) => {
     return next(error);
   }
 
-  let token;
-  try {
-    token = jwt.sign(
-      { userId: createdUser.id, email: createdUser.email },
-      "supersecret",
-      { expiresIn: "1h" }
-    );
-  } catch (err) {
-    const error = new HttpError("Signing in failed, please try again.", 500);
-    return next(error);
-  }
+  // let token;
+  // try {
+  //   token = jwt.sign(
+  //     { userId: createdUser.id, email: createdUser.email },
+  //     "supersecret",
+  //     { expiresIn: "1h" }
+  //   );
+  // } catch (err) {
+  //   const error = new HttpError("Signing in failed, please try again.", 500);
+  //   return next(error);
+  // }
 
-  res.status(201).json({
-    userId: createdUser.id,
-    email: createdUser.email,
-    token: token,
-    role: createdUser.role,
-    expiresIn: 3600,
-  });
+  // res.status(201).json({
+  //   userId: createdUser.id,
+  //   email: createdUser.email,
+  //   token: token,
+  //   role: createdUser.role,
+  //   expiresIn: 3600,
+  // });
 };
 
 exports.viewAllLeave = async (req, res, next) => {
@@ -469,4 +470,81 @@ exports.changePassword = async (req, res, next) => {
     console.error(err);
     res.status(500).json({ message: "Server Error" });
   }
+};
+
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, "_id"); // Fetch only the _id field of users
+    const userIds = users.map((user) => user._id.toString()); // Convert ObjectIds to strings
+    res.json(userIds);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+exports.createNotice = async (req, res) => {
+  try {
+    const { title, date, description } = req.body;
+    const notice = new Notice({
+      title,
+      date,
+      description,
+      image:
+        "https://voh-ny.com/wp-content/uploads/2018/12/important-notice-hi.png",
+    });
+
+    const createdNotice = await notice.save();
+    const obj = {
+      id: createdNotice._id,
+      title: createdNotice.title,
+      date: createdNotice.date,
+      description: createdNotice.description,
+      image: createdNotice.image,
+    };
+    res.json({
+      message: "Notice Created",
+      createdTask: obj,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Creating notice failed" });
+  }
+};
+
+exports.getNotice = async (req, res, next) => {
+  let notices;
+
+  try {
+    notices = await Notice.find({});
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching notice failed, please try again later",
+      500
+    );
+    return next(error);
+  }
+  res.json({
+    notices: notices.map((notice) =>
+      notice.toObject({
+        getters: true,
+      })
+    ),
+  });
+};
+
+exports.viewTask = async (req, res, next) => {
+  let tasks;
+  try {
+    tasks = await Task.find({});
+  } catch (err) {
+    const error = new HttpError("Could not find the task", 500);
+    return next(error);
+  }
+  res.json({
+    tasks: tasks.map((task) =>
+      task.toObject({
+        getters: true,
+      })
+    ),
+  });
 };
